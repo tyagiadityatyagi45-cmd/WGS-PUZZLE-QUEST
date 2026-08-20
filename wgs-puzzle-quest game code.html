@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PUZZLE QUEST | WGS Code Academy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=Space+Mono&display=swap" rel="stylesheet">
+    <style>
+:root {
+    --bg-a: #6C63FF;
+    --bg-b: #FF6FB5;
+    --bg-c: #37D6C4;
+    --card-bg: #ffffff;
+    --card-bg-soft: #f6f4ff;
+    --text-main: #2b2650;
+    --text-dim: #7a7599;
+    --primary: #6C63FF;
+    --primary-dark: #5147e0;
+    --accent: #FFC94A;
+    --accent-dark: #f5a623;
+    --success: #23C68B;
+    --success-dark: #1aa876;
+    --danger: #FF5C7A;
+    --danger-dark: #e8385c;
+    --font-heading: 'Fredoka', sans-serif;
+    --font-body: 'Nunito', sans-serif;
+    --font-code: 'Space Mono', monospace;
+    --shadow-pop: 0 6px 0 rgba(0,0,0,0.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+body {
+    background: linear-gradient(135deg, var(--bg-a) 0%, #8E7CFF 45%, var(--bg-b) 100%);
+    background-attachment: fixed;
+    color: var(--text-main);
+    font-family: var(--font-body);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* Floating decorative blobs for a friendly game backdrop */
+.bg-blob { position: fixed; border-radius: 50%; opacity: 0.25; filter: blur(2px); z-index: 0; pointer-events: none; animation: floaty 8s ease-in-out infinite; }
+.bg-blob.b1 { width: 220px; height: 220px; background: var(--accent); top: -60px; left: -60px; animation-duration: 9s; }
+.bg-blob.b2 { width: 160px; height: 160px; background: var(--bg-c); bottom: -40px; right: 5%; animation-duration: 11s; animation-delay: 1s; }
+.bg-blob.b3 { width: 120px; height: 120px; background: #ffffff; top: 40%; right: -40px; animation-duration: 7s; animation-delay: 0.5s; }
+@keyframes floaty { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(15deg); } }
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 26px;
+    background: rgba(255,255,255,0.14);
+    backdrop-filter: blur(6px);
+    z-index: 10;
+    position: relative;
+}
+.brand { display: flex; flex-direction: column; }
+.brand .game-logo { font-family: var(--font-heading); font-size: 1.5rem; color: #fff; font-weight: 700; letter-spacing: 1px; text-shadow: 0 2px 0 rgba(0,0,0,0.15); }
+.brand .sub-brand { font-size: 0.78rem; color: rgba(255,255,255,0.85); font-weight: 700; letter-spacing: 1.5px; }
+.controls { display: flex; gap: 10px; }
+
+/* Utility */
+.hidden { display: none !important; }
+.mt-20 { margin-top: 20px; }
+.highlight { color: var(--primary-dark); font-weight: 800; }
+.critical { color: var(--danger-dark); font-weight: 800; }
+.success { color: var(--success-dark); font-weight: 800; }
+
+@keyframes pulseWarning { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+.pulse-warning { color: var(--danger) !important; animation: pulseWarning 1s infinite; }
+
+/* Bouncy game title */
+.game-title {
+    font-family: var(--font-heading);
+    font-size: 4.2rem;
+    font-weight: 700;
+    background: linear-gradient(90deg, #FFD23F, #FF6FB5, #6C63FF);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shine 4s linear infinite, bounceIn 0.8s ease;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+}
+@keyframes shine { to { background-position: 200% center; } }
+@keyframes bounceIn { 0% { transform: scale(0.6); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }
+
+/* Screens */
+#app { position: relative; flex: 1; display: flex; justify-content: center; align-items: center; overflow-y: auto; z-index: 1; }
+.screen {
+    width: 92%; max-width: 1100px; height: 88%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    animation: fadeIn 0.45s ease-out;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* Start Screen */
+#start-screen { text-align: center; }
+.title-container h2 { color: #fff; font-family: var(--font-heading); font-size: 1.2rem; letter-spacing: 3px; margin-bottom: 30px; text-shadow: 0 2px 0 rgba(0,0,0,0.1); }
+.system-status { margin-bottom: 36px; min-height: 90px; }
+.typing-text { color: #fff; font-size: 1.15rem; margin: 6px 0; overflow: hidden; white-space: nowrap; font-weight: 700; width: 0; animation: typing 1.2s steps(30, end) forwards, fadeReveal 0.1s forwards; }
+.delay-1 { animation-delay: 1.2s, 1.2s; }
+.delay-2 { animation-delay: 2.4s, 2.4s; }
+.nav-buttons.delay-3 { opacity: 0; animation: fadeReveal 1s forwards; animation-delay: 3.6s; }
+@keyframes typing { from { width: 0 } to { width: 100% } }
+@keyframes fadeReveal { to { opacity: 1; } }
+
+/* Buttons */
+.nav-buttons { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+.game-btn {
+    background: var(--card-bg); color: var(--primary-dark); font-family: var(--font-heading);
+    border: none; padding: 14px 26px; font-size: 1.05rem; border-radius: 50px;
+    cursor: pointer; position: relative; transition: transform 0.12s, box-shadow 0.12s;
+    font-weight: 600; letter-spacing: 0.5px; box-shadow: var(--shadow-pop);
+}
+.game-btn:hover { transform: translateY(-2px); }
+.game-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.12); }
+.game-btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-dark)); color: #5a3d00; box-shadow: 0 6px 0 #c9820a; }
+.game-btn.warning { background: linear-gradient(135deg, var(--danger), var(--danger-dark)); color: #fff; box-shadow: 0 6px 0 #b52847; }
+.game-btn.small { padding: 8px 14px; font-size: 0.85rem; box-shadow: 0 4px 0 rgba(0,0,0,0.12); border-radius: 30px; }
+.game-btn.ghost { background: rgba(255,255,255,0.9); }
+.game-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+/* Panels and Terminal */
+.terminal-box {
+    background: var(--card-bg); border: none; border-radius: 24px;
+    box-shadow: 0 12px 0 rgba(0,0,0,0.1), 0 20px 40px rgba(0,0,0,0.2);
+    width: 100%; max-width: 820px; padding: 28px; color: var(--text-main);
+}
+.terminal-header { display: flex; justify-content: space-between; border-bottom: 2px dashed var(--card-bg-soft); padding-bottom: 12px; margin-bottom: 20px; font-size: 0.85rem; color: var(--text-dim); font-weight: 700; }
+.terminal-body { font-size: 1.15rem; line-height: 1.7; min-height: 180px; margin-bottom: 20px; font-weight: 600; }
+.panel-header { display: flex; justify-content: space-between; align-items: center; width: 100%; border-bottom: 3px solid rgba(255,255,255,0.4); padding-bottom: 12px; margin-bottom: 20px; }
+.panel-header h2 { font-family: var(--font-heading); color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,0.1); }
+
+/* Dashboard */
+#game-screen { justify-content: flex-start; padding-top: 16px; }
+.dashboard { display: flex; justify-content: space-between; width: 100%; background: rgba(255,255,255,0.95); border-radius: 20px; padding: 16px 20px; margin-bottom: 18px; flex-wrap: wrap; gap: 14px; box-shadow: 0 8px 0 rgba(0,0,0,0.08); }
+.dash-panel { display: flex; flex-direction: column; align-items: center; }
+.dash-panel .label { font-size: 0.68rem; color: var(--text-dim); letter-spacing: 1px; margin-bottom: 6px; font-weight: 800; }
+.progress-bar { width: 150px; height: 12px; border-radius: 10px; background: #eceafd; margin-bottom: 5px; overflow: hidden; }
+.progress-bar .fill { height: 100%; background: linear-gradient(90deg, var(--success), var(--bg-c)); transition: width 0.5s ease-in-out; border-radius: 10px; }
+.keys-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; }
+.key-slot { font-size: 0.78rem; color: var(--text-dim); font-weight: 700; }
+.key-slot.recovered { color: var(--success-dark); font-weight: 800; }
+
+/* Level Container */
+.level-box { width: 100%; flex: 1; background: rgba(255,255,255,0.97); border-radius: 24px; padding: 30px; display: flex; flex-direction: column; overflow-y: auto; position: relative; box-shadow: 0 8px 0 rgba(0,0,0,0.08); animation: levelPop 0.5s cubic-bezier(.2,1.4,.4,1); }
+@keyframes levelPop { 0% { opacity: 0; transform: scale(0.92) translateY(14px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+.level-header { text-align: center; margin-bottom: 24px; }
+.level-header h2 { font-family: var(--font-heading); font-size: 1.9rem; color: var(--primary); letter-spacing: 1px; }
+.level-header h3 { font-size: 1.05rem; color: var(--accent-dark); font-weight: 800; letter-spacing: 1px; }
+.data-block { background: var(--card-bg-soft); border: 2px dashed #d8d3ff; border-radius: 16px; padding: 20px; font-size: 1.4rem; text-align: center; letter-spacing: 3px; word-break: break-all; margin: 20px 0; color: var(--primary-dark); font-family: var(--font-code); }
+.hint-text { color: var(--text-dim); font-weight: 700; margin-bottom: 10px; min-height: 20px; text-align: center; white-space: pre-line; }
+
+/* Inputs */
+.game-input { background: #fbfaff; border: 2px solid #e2ddff; border-radius: 14px; color: var(--text-main); padding: 14px; font-family: var(--font-body); font-weight: 800; font-size: 1.1rem; outline: none; transition: box-shadow 0.2s, border-color 0.2s; width: 100%; text-transform: uppercase; }
+.game-input:focus { box-shadow: 0 0 0 4px rgba(108,99,255,0.15); border-color: var(--primary); }
+.game-input.large-input { font-size: 1.3rem; text-align: center; margin-bottom: 15px; }
+.interaction-area { display: flex; flex-direction: column; align-items: center; max-width: 500px; margin: 0 auto; gap: 15px; width: 100%; }
+.btn-group { display: flex; gap: 10px; width: 100%; }
+.btn-group button { flex: 1; }
+
+/* Digital Detective Level Specific */
+.log-container { background: #232042; border-radius: 14px; padding: 14px; font-size: 0.95rem; color: #d6d2ff; height: 190px; overflow-y: auto; text-align: left; margin-bottom: 20px; font-family: var(--font-code); }
+.log-entry { margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 5px; }
+.log-entry.sus { color: #FF9E7D; }
+.log-entry.high { color: #7DE0FF; }
+
+/* Lab Grid */
+.lab-grid { display: grid; grid-template-columns: 1fr 200px 1fr; gap: 20px; height: 100%; width: 100%; }
+.lab-col { display: flex; flex-direction: column; }
+.lab-col label { color: #fff; margin-bottom: 10px; font-weight: 800; }
+.textarea { flex: 1; resize: none; font-size: 1rem; text-transform: none; }
+.controls-col { justify-content: center; gap: 16px; }
+.controls-col select { text-transform: none; }
+
+/* Codebreaker Mode */
+.diff-selector { display: flex; gap: 12px; justify-content: center; margin-bottom: 10px; }
+.diff-btn.active { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; }
+.data-block#cb-cipher-text { font-size: 1.2rem; }
+#cb-feedback { text-align: center; margin-top: 10px; min-height: 1.5rem; font-weight: 800; }
+
+/* Leaderboard */
+.table-container { width: 100%; overflow-y: auto; max-height: 400px; background: rgba(255,255,255,0.97); border-radius: 20px; padding: 10px 6px; }
+.game-table { width: 100%; border-collapse: collapse; }
+.game-table th, .game-table td { padding: 14px; text-align: left; border-bottom: 2px solid var(--card-bg-soft); font-weight: 700; }
+.game-table th { color: var(--primary); font-weight: 800; }
+.game-table tr:nth-child(1) td { color: #d69a00; font-weight: 800; }
+.game-table tr:nth-child(2) td { color: #8b8b98; font-weight: 800; }
+.game-table tr:nth-child(3) td { color: #b5651d; font-weight: 800; }
+.leaderboard-note { color: #fff; font-size: 0.8rem; text-align: center; margin-top: 15px; font-weight: 700; }
+
+/* Team Section */
+.team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; width: 100%; }
+.team-card { background: var(--card-bg); border-radius: 20px; padding: 20px; text-align: center; transition: transform 0.2s; box-shadow: 0 6px 0 rgba(0,0,0,0.08); }
+.team-card:hover { transform: translateY(-5px); }
+.team-card h3 { font-family: var(--font-heading); font-size: 1.3rem; margin-bottom: 5px; color: var(--primary); }
+.team-card .avatar { width: 76px; height: 76px; border: 3px solid var(--accent); border-radius: 50%; margin: 15px auto 0; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 800; color: var(--primary-dark); background: var(--card-bg-soft); }
+
+/* Result Screen */
+.result-box { text-align: center; position: relative; overflow: hidden; }
+.stats { font-size: 1.3rem; margin: 26px 0; font-weight: 800; }
+#team-name-entry { margin: 20px 0; }
+#team-name-entry input { text-align: center; margin-bottom: 15px; }
+
+/* ===== Level Transition Overlay (celebration + sledging AI) ===== */
+#transition-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    background: linear-gradient(135deg, rgba(108,99,255,0.96), rgba(255,111,181,0.96));
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; gap: 18px;
+}
+.transition-badge { font-family: var(--font-heading); font-size: 3rem; color: #fff; text-shadow: 0 4px 0 rgba(0,0,0,0.15); animation: badgePop 0.6s cubic-bezier(.2,1.6,.4,1); }
+@keyframes badgePop { 0% { transform: scale(0.3) rotate(-8deg); opacity: 0; } 60% { transform: scale(1.15) rotate(3deg); opacity: 1; } 100% { transform: scale(1) rotate(0); } }
+.ai-bubble-wrap { display: flex; align-items: center; gap: 14px; max-width: 560px; background: rgba(255,255,255,0.96); border-radius: 24px; padding: 16px 22px; box-shadow: 0 8px 0 rgba(0,0,0,0.1); animation: slideUp 0.5s ease-out 0.2s both; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+.ai-avatar { font-size: 2.4rem; flex-shrink: 0; animation: wobble 1.4s ease-in-out infinite; }
+@keyframes wobble { 0%,100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); } }
+.ai-text { font-weight: 800; color: var(--text-main); font-size: 1.05rem; text-align: left; }
+.ai-label { font-size: 0.68rem; color: var(--primary); letter-spacing: 1px; font-weight: 800; display: block; margin-bottom: 3px; }
+
+.confetti-piece { position: fixed; top: -20px; width: 10px; height: 16px; z-index: 501; opacity: 0.95; animation: confettiFall linear forwards; border-radius: 2px; }
+@keyframes confettiFall { to { transform: translateY(110vh) rotate(540deg); opacity: 0.2; } }
+
+/* ===== Answer Key Overlay ===== */
+#answerkey-overlay { position: fixed; inset: 0; z-index: 600; background: rgba(30, 25, 60, 0.72); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.ak-modal { background: var(--card-bg); border-radius: 24px; width: 100%; max-width: 640px; max-height: 82vh; overflow-y: auto; padding: 28px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: badgePop 0.35s ease; }
+.ak-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.ak-header h2 { font-family: var(--font-heading); color: var(--primary); font-size: 1.5rem; }
+.ak-lock-icon { font-size: 2.6rem; text-align: center; margin-bottom: 6px; }
+.ak-sub { text-align: center; color: var(--text-dim); font-weight: 700; margin-bottom: 18px; }
+.ak-error { color: var(--danger-dark); text-align: center; font-weight: 800; min-height: 22px; margin-top: 8px; }
+.ak-shake { animation: shakeErr 0.4s; }
+@keyframes shakeErr { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+.ak-card { background: var(--card-bg-soft); border-radius: 16px; padding: 16px 18px; margin-bottom: 14px; border-left: 6px solid var(--primary); }
+.ak-card h4 { font-family: var(--font-heading); color: var(--primary-dark); margin-bottom: 6px; font-size: 1.05rem; }
+.ak-card .ak-data { font-family: var(--font-code); background: #fff; border-radius: 8px; padding: 8px 10px; margin: 6px 0; word-break: break-all; font-size: 0.85rem; color: var(--text-dim); }
+.ak-card .ak-answer { font-weight: 800; color: var(--success-dark); font-size: 1.05rem; }
+
+/* Responsive */
+@media (max-width: 900px) {
+    .game-title { font-size: 2.6rem; }
+    .lab-grid { grid-template-columns: 1fr; grid-template-rows: 1fr auto 1fr; }
+    .team-grid { grid-template-columns: 1fr; }
+    .dashboard { flex-wrap: wrap; gap: 10px; }
+    .screen { height: auto; min-height: 85%; padding: 10px 0; }
+    .ai-bubble-wrap { flex-direction: column; text-align: center; }
+    .ai-text { text-align: center; }
+}
+
+    </style>
+</head>
+<body>
+    <!-- Decorative background blobs -->
+    <div class="bg-blob b1"></div>
+    <div class="bg-blob b2"></div>
+    <div class="bg-blob b3"></div>
+
+    <!-- Global Header -->
+    <header id="global-header">
+        <div class="brand">
+            <span class="game-logo">🧩 WISDOM GLOBAL SCHOOL</span>
+            <span class="sub-brand">PUZZLE QUEST CHALLENGE</span>
+        </div>
+        <div class="controls">
+            <button id="btn-answer-key" class="game-btn small ghost">🔑 ANSWER KEY</button>
+            <button id="btn-mute" class="game-btn small ghost">🔊 SOUND ON</button>
+        </div>
+    </header>
+
+    <!-- Main Application Container -->
+    <main id="app">
+
+        <!-- START SCREEN -->
+        <section id="start-screen" class="screen active">
+            <div class="title-container">
+                <h1 class="game-title">PUZZLE QUEST</h1>
+                <h2>WGS CODE ACADEMY CHALLENGE</h2>
+            </div>
+            <div class="system-status">
+                <p class="typing-text">🎮 GAME LOADED &amp; READY</p>
+                <p class="typing-text delay-1">🧩 5 FRESH PUZZLES WAITING</p>
+                <p class="typing-text delay-2">🏆 LET'S SEE WHAT YOU'VE GOT!</p>
+            </div>
+            <div class="nav-buttons delay-3">
+                <button id="btn-start-mission" class="game-btn primary">[ START QUEST ]</button>
+                <button id="btn-open-lab" class="game-btn">[ CIPHER LAB ]</button>
+                <button id="btn-open-codebreaker" class="game-btn">[ CODEBREAKER MODE ]</button>
+                <button id="btn-open-leaderboard" class="game-btn">[ LEADERBOARD ]</button>
+                <button id="btn-open-team" class="game-btn">[ MEET THE TEAM ]</button>
+            </div>
+        </section>
+
+        <!-- MISSION BRIEFING -->
+        <section id="briefing-screen" class="screen hidden">
+            <div class="terminal-box">
+                <div class="terminal-header">
+                    <span>📜 QUEST BRIEFING</span>
+                    <span>WGS-PUZZLE-NET</span>
+                </div>
+                <div class="terminal-body" id="briefing-text"></div>
+                <button id="btn-accept-mission" class="game-btn primary hidden">[ START THE CLOCK &amp; PLAY ]</button>
+            </div>
+        </section>
+
+        <!-- MAIN GAME DASHBOARD -->
+        <section id="game-screen" class="screen hidden">
+            <div class="dashboard">
+                <div class="dash-panel">
+                    <span class="label">PROGRESS</span>
+                    <div class="progress-bar">
+                        <div id="integrity-fill" class="fill" style="width: 0%;"></div>
+                    </div>
+                    <span id="integrity-val">0%</span>
+                </div>
+                <div class="dash-panel">
+                    <span class="label">TIME REMAINING</span>
+                    <span id="timer-display" class="highlight">15:00</span>
+                </div>
+                <div class="dash-panel">
+                    <span class="label">SCORE</span>
+                    <span id="score-display" class="highlight">0000</span>
+                </div>
+                <div class="dash-panel">
+                    <span class="label">LIVES</span>
+                    <span id="lives-display" class="highlight">♥♥♥</span>
+                </div>
+                <div class="dash-panel keys-panel">
+                    <span class="label">PUZZLE KEYS</span>
+                    <div id="keys-display" class="keys-grid">
+                        <span id="key-1" class="key-slot">○ KEY-01</span>
+                        <span id="key-2" class="key-slot">○ KEY-02</span>
+                        <span id="key-3" class="key-slot">○ KEY-03</span>
+                        <span id="key-4" class="key-slot">○ KEY-04</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Level Container -->
+            <div id="level-container" class="level-box">
+                <!-- Dynamic Level Content Injected Here -->
+            </div>
+        </section>
+
+        <!-- RESULT SCREEN (Win/Loss) -->
+        <section id="result-screen" class="screen hidden">
+            <div class="terminal-box result-box">
+                <h1 id="result-title" class="game-title" style="font-size:2.6rem;">QUEST COMPLETE!</h1>
+                <div class="stats">
+                    <p>FINAL SCORE: <span id="final-score" class="highlight">0</span></p>
+                    <p>TIME LEFT: <span id="final-time" class="highlight">00:00</span></p>
+                </div>
+                <div id="team-name-entry" class="hidden">
+                    <p>ENTER TEAM NAME FOR LEADERBOARD:</p>
+                    <input type="text" id="input-team-name" class="game-input" placeholder="TEAM NAME" maxlength="15">
+                    <button id="btn-submit-score" class="game-btn primary">SUBMIT SCORE</button>
+                </div>
+                <button id="btn-return-home" class="game-btn mt-20">[ RETURN TO MAIN MENU ]</button>
+            </div>
+        </section>
+
+        <!-- CIPHER LAB -->
+        <section id="lab-screen" class="screen hidden">
+            <div class="panel-header">
+                <h2>🔬 WGS CIPHER LAB</h2>
+                <button class="btn-close game-btn small">[ X ]</button>
+            </div>
+            <div class="lab-grid">
+                <div class="lab-col">
+                    <label>INPUT TEXT:</label>
+                    <textarea id="lab-input" class="game-input textarea" placeholder="Enter message here..."></textarea>
+                </div>
+                <div class="lab-col controls-col">
+                    <label>ALGORITHM:</label>
+                    <select id="lab-cipher" class="game-input">
+                        <option value="binary">Binary (Base-2)</option>
+                        <option value="morse">Morse Code</option>
+                        <option value="ascii">ASCII Values</option>
+                        <option value="caesar">Caesar Cipher</option>
+                        <option value="vigenere">Vigenère Cipher</option>
+                    </select>
+                    <div id="lab-key-container" class="hidden">
+                        <label id="lab-key-label">KEY / SHIFT:</label>
+                        <input type="text" id="lab-key" class="game-input" placeholder="Enter key">
+                    </div>
+                    <button id="btn-lab-encrypt" class="game-btn primary">ENCRYPT &gt;&gt;</button>
+                    <button id="btn-lab-decrypt" class="game-btn warning">&lt;&lt; DECRYPT</button>
+                </div>
+                <div class="lab-col">
+                    <label>OUTPUT TEXT:</label>
+                    <textarea id="lab-output" class="game-input textarea" readonly placeholder="Result will appear here..."></textarea>
+                </div>
+            </div>
+        </section>
+
+        <!-- CODEBREAKER MODE -->
+        <section id="codebreaker-screen" class="screen hidden">
+            <div class="panel-header">
+                <h2>🕵️ CODEBREAKER MODE</h2>
+                <button class="btn-close game-btn small">[ X ]</button>
+            </div>
+            <div class="terminal-box">
+                <div class="diff-selector">
+                    <button class="game-btn diff-btn" data-diff="easy">EASY</button>
+                    <button class="game-btn diff-btn" data-diff="medium">MEDIUM</button>
+                    <button class="game-btn diff-btn" data-diff="hard">HARD</button>
+                </div>
+                <div id="cb-puzzle-area" class="hidden mt-20">
+                    <p class="highlight">MESSAGE INTERCEPTED:</p>
+                    <div id="cb-cipher-text" class="data-block"></div>
+                    <p id="cb-hint" class="hint-text"></p>
+                    <input type="text" id="cb-input" class="game-input large-input" placeholder="DECODED MESSAGE">
+                    <button id="cb-submit" class="game-btn primary">VERIFY</button>
+                    <p id="cb-feedback"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEADERBOARD -->
+        <section id="leaderboard-screen" class="screen hidden">
+            <div class="panel-header">
+                <h2>🏆 TOP PUZZLE CHAMPIONS</h2>
+                <button class="btn-close game-btn small">[ X ]</button>
+            </div>
+            <div class="table-container">
+                <table class="game-table">
+                    <thead>
+                        <tr>
+                            <th>RANK</th>
+                            <th>TEAM</th>
+                            <th>SCORE</th>
+                            <th>TIME LEFT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+            <p class="leaderboard-note">This board is shared — every team's submitted score is visible to everyone playing.</p>
+            <button id="btn-clear-lb" class="game-btn warning mt-20">[ WIPE DATABASE ]</button>
+        </section>
+
+        <!-- TEAM PERSONNEL -->
+        <section id="team-screen" class="screen hidden">
+            <div class="panel-header">
+                <h2>👥 MEET THE TEAM</h2>
+                <button class="btn-close game-btn small">[ X ]</button>
+            </div>
+            <div class="team-grid">
+                <div class="team-card">
+                    <h3>IT CAPTAIN</h3>
+                    <p class="highlight">Quest Leader</p>
+                    <div class="avatar">[ CMD ]</div>
+                </div>
+                <div class="team-card">
+                    <h3>VICE IT CAPTAIN</h3>
+                    <p class="highlight">Cipher Specialist</p>
+                    <div class="avatar">[ CRY ]</div>
+                </div>
+                <div class="team-card">
+                    <h3>IT PRO</h3>
+                    <p class="highlight">Game Systems Developer</p>
+                    <div class="avatar">[ SYS ]</div>
+                </div>
+                <div class="team-card">
+                    <h3>IT PRO 2</h3>
+                    <p class="highlight">Puzzle Analyst &amp; Testing</p>
+                    <div class="avatar">[ SEC ]</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- LEVEL TRANSITION OVERLAY (celebration + sledging AI) -->
+    <div id="transition-overlay" class="hidden">
+        <div id="transition-badge" class="transition-badge">🎉 LEVEL COMPLETE!</div>
+        <div class="ai-bubble-wrap">
+            <div class="ai-avatar">🤖</div>
+            <div class="ai-text"><span class="ai-label">QUIZ-BOT SAYS</span><span id="ai-taunt-text">Let's go!</span></div>
+        </div>
+    </div>
+
+    <!-- ANSWER KEY OVERLAY (password protected) -->
+    <div id="answerkey-overlay" class="hidden">
+        <div class="ak-modal">
+            <div class="ak-header">
+                <h2>🔑 Answer Key</h2>
+                <button id="btn-ak-close" class="game-btn small">[ X ]</button>
+            </div>
+
+            <div id="ak-password-screen">
+                <div class="ak-lock-icon">🔒</div>
+                <p class="ak-sub">This answer key is locked. Enter the secret password to view it.</p>
+                <input type="password" id="ak-password-input" class="game-input large-input" placeholder="ENTER PASSWORD" autocomplete="off">
+                <button id="btn-ak-submit" class="game-btn primary" style="width:100%; margin-top:12px;">UNLOCK ANSWER KEY</button>
+                <p id="ak-error" class="ak-error"></p>
+            </div>
+
+            <div id="ak-content-screen" class="hidden">
+                <p class="ak-sub">🔓 Unlocked! Here are this session's questions &amp; answers for all 5 levels.</p>
+                <div id="ak-levels-list"></div>
+                <button id="btn-ak-lock" class="game-btn warning" style="width:100%;">🔒 LOCK ANSWER KEY AGAIN</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+/**
+ * PUZZLE QUEST: WGS CODE ACADEMY CHALLENGE
+ * Core Logic Engine
+ */
+
+// --- CONFIGURATION ---
+const CONFIG = {
+    startMinutes: 15,
+    maxLives: 3,
+    totalLevels: 5,
+    pointsPerLevel: 100,
+    timeBonusMultiplier: 2, // Points per second remaining
+    penaltyHint: 25,
+    penaltyWrong: 10,
+    words: ['PUZZLE', 'QUEST', 'TREASURE', 'ACADEMY', 'WISDOM', 'MYSTERY', 'EXPLORE', 'DISCOVER', 'CHAMPION', 'UNLOCK', 'GATEWAY', 'JOURNEY', 'LEGEND', 'VICTORY', 'ADVENTURE']
+};
+
+const ANSWER_KEY_PASSWORD = 'WGS PRIME';
+const LB_PREFIX = 'leaderboard:';
+
+// Word banks used specifically for full-game level generation
+const VIG_WORD_BANK = ['PUZZLE', 'MYSTERY', 'ACADEMY', 'WISDOM', 'TREASURE', 'DISCOVER', 'EXPLORE', 'GATEWAY'];
+const VIG_KEY_BANK = ['WGS', 'QUEST', 'LOCK', 'PRIME', 'CODE', 'STAR'];
+const FINAL_WORD_BANK = ['VICTORY', 'CHAMPION', 'TREASURE', 'SUCCESS', 'UNLOCKED', 'LEGENDARY', 'TRIUMPH'];
+
+// Sledging AI taunt lines — shown (randomly, one at a time) at every level transition
+const AI_TAUNTS = [
+    "Oh, moved to the next level already? Let's see what you'll do here! 😏",
+    "Not bad... for a beginner. Show me you can keep it up!",
+    "Lucky guess? Prove it wasn't just luck!",
+    "Ooooh, look who's still standing. Onward!",
+    "Impressive! But the next puzzle won't be so easy...",
+    "Level cleared! I'm almost impressed. Almost. 😌",
+    "That was fast — or was I just going easy on you?",
+    "Nice work! But don't get too comfortable now.",
+    "One down. Think you can handle what's next?",
+    "Alright, alright... moving on. Show me more!",
+    "That was easy for you? Let's crank things up a notch!",
+    "Color me surprised. On to the next challenge, champ.",
+    "Beginner's luck is running out... let's see level after level!",
+    "You again? Fine. Next puzzle, coming right up.",
+    "Careful — I'm starting to think you're actually good at this.",
+    "Bold move advancing so quickly. I respect it. Barely.",
+];
+
+// --- STATE MANAGEMENT ---
+let GAME_STATE = {
+    level: 1,
+    score: 0,
+    lives: CONFIG.maxLives,
+    timeRemaining: CONFIG.startMinutes * 60,
+    timerInterval: null,
+    currentAnswer: '',
+    currentHints: [],
+    hintIndex: 0,
+    inventory: [], // Stores recovered keys for narrative
+    levels: []      // Pre-generated set of 5 level configs for this play-through
+};
+
+let CB_STATE = { answer: '', difficulty: '' };
+let wipeConfirmPending = false;
+let soundEnabled = true;
+let usedTaunts = [];
+
+// --- AUDIO ENGINE (Web Audio API Synthesizer) ---
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+const audioCtx = new AudioContext();
+
+const Sound = {
+    playTone: (freq, type, duration, vol=0.1) => {
+        if (!soundEnabled || audioCtx.state === 'suspended') return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    },
+    click: () => Sound.playTone(800, 'square', 0.1, 0.05),
+    type: () => Sound.playTone(1200, 'triangle', 0.05, 0.02),
+    success: () => {
+        Sound.playTone(600, 'sine', 0.1, 0.1);
+        setTimeout(() => Sound.playTone(800, 'sine', 0.2, 0.15), 100);
+        setTimeout(() => Sound.playTone(1200, 'sine', 0.4, 0.2), 200);
+    },
+    error: () => {
+        Sound.playTone(200, 'sawtooth', 0.2, 0.1);
+        setTimeout(() => Sound.playTone(150, 'sawtooth', 0.3, 0.1), 150);
+    },
+    warning: () => {
+        Sound.playTone(400, 'square', 0.5, 0.1);
+    },
+    fanfare: () => {
+        [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => Sound.playTone(f, 'sine', 0.35, 0.15), i * 120));
+    }
+};
+
+// --- CIPHER ENGINE ---
+const Ciphers = {
+    // 1. Binary
+    textToBinary: (text) => text.toUpperCase().split('').map(c => c.charCodeAt(0).toString(2).padStart(8, '0')).join(' '),
+    binaryToText: (bin) => bin.trim().split(/\s+/).map(b => String.fromCharCode(parseInt(b, 2))).join(''),
+
+    // 2. ASCII
+    textToAscii: (text) => text.toUpperCase().split('').map(c => c.charCodeAt(0)).join(' '),
+    asciiToText: (ascii) => ascii.trim().split(/\s+/).map(a => String.fromCharCode(parseInt(a))).join(''),
+
+    // 3. Morse Code
+    morseDict: {
+        'A':'.-','B':'-...','C':'-.-.','D':'-..','E':'.','F':'..-.','G':'--.','H':'....','I':'..','J':'.---','K':'-.-','L':'.-..','M':'--','N':'-.','O':'---','P':'.--.','Q':'--.-','R':'.-.','S':'...','T':'-','U':'..-','V':'...-','W':'.--','X':'-..-','Y':'-.--','Z':'--..','1':'.----','2':'..---','3':'...--','4':'....-','5':'.....','6':'-....','7':'--...','8':'---..','9':'----.','0':'-----',' ':'/'
+    },
+    textToMorse: function(text) {
+        return text.toUpperCase().split('').map(c => this.morseDict[c] || '').join(' ').replace(/ \/ /g, ' / ');
+    },
+    morseToText: function(morse) {
+        const revDict = Object.fromEntries(Object.entries(this.morseDict).map(([k,v]) => [v,k]));
+        return morse.trim().split(' ').map(m => revDict[m] || '').join('');
+    },
+
+    // 4. Caesar Cipher
+    caesar: (text, shift, decrypt = false) => {
+        const s = decrypt ? (26 - (shift % 26)) : (shift % 26);
+        return text.toUpperCase().split('').map(c => {
+            if (c.match(/[A-Z]/)) {
+                let code = c.charCodeAt(0) - 65;
+                return String.fromCharCode(((code + s) % 26) + 65);
+            }
+            return c;
+        }).join('');
+    },
+
+    // 5. Vigenère Cipher
+    vigenere: (text, key, decrypt = false) => {
+        key = key.toUpperCase().replace(/[^A-Z]/g, '');
+        if (!key) return text;
+        let result = '';
+        let keyIdx = 0;
+        for (let i = 0; i < text.length; i++) {
+            let c = text[i].toUpperCase();
+            if (c.match(/[A-Z]/)) {
+                let shift = key.charCodeAt(keyIdx % key.length) - 65;
+                if (decrypt) shift = 26 - shift;
+                let code = c.charCodeAt(0) - 65;
+                result += String.fromCharCode(((code + shift) % 26) + 65);
+                keyIdx++;
+            } else {
+                result += c;
+            }
+        }
+        return result;
+    }
+};
+
+// --- DOM ELEMENTS ---
+const DOM = {
+    screens: document.querySelectorAll('.screen'),
+    btnMute: document.getElementById('btn-mute'),
+    // Start Menu
+    btnStart: document.getElementById('btn-start-mission'),
+    btnLab: document.getElementById('btn-open-lab'),
+    btnCB: document.getElementById('btn-open-codebreaker'),
+    btnLB: document.getElementById('btn-open-leaderboard'),
+    btnTeam: document.getElementById('btn-open-team'),
+    btnCloses: document.querySelectorAll('.btn-close'),
+    btnHome: document.getElementById('btn-return-home'),
+    // Game UI
+    btnAccept: document.getElementById('btn-accept-mission'),
+    levelBox: document.getElementById('level-container'),
+    dashIntegrity: document.getElementById('integrity-fill'),
+    dashIntVal: document.getElementById('integrity-val'),
+    dashTimer: document.getElementById('timer-display'),
+    dashScore: document.getElementById('score-display'),
+    dashLives: document.getElementById('lives-display'),
+    // Encryption Lab
+    labInput: document.getElementById('lab-input'),
+    labOutput: document.getElementById('lab-output'),
+    labCipher: document.getElementById('lab-cipher'),
+    labKeyContainer: document.getElementById('lab-key-container'),
+    labKey: document.getElementById('lab-key'),
+    labKeyLabel: document.getElementById('lab-key-label'),
+    btnLabEnc: document.getElementById('btn-lab-encrypt'),
+    btnLabDec: document.getElementById('btn-lab-decrypt'),
+    // Codebreaker
+    diffButtons: document.querySelectorAll('.diff-btn'),
+    cbPuzzleArea: document.getElementById('cb-puzzle-area'),
+    cbCipherText: document.getElementById('cb-cipher-text'),
+    cbHint: document.getElementById('cb-hint'),
+    cbInput: document.getElementById('cb-input'),
+    cbSubmit: document.getElementById('cb-submit'),
+    cbFeedback: document.getElementById('cb-feedback'),
+    // Leaderboard
+    leaderboardBody: document.getElementById('leaderboard-body'),
+    btnClearLB: document.getElementById('btn-clear-lb'),
+    teamNameEntry: document.getElementById('team-name-entry'),
+    inputTeamName: document.getElementById('input-team-name'),
+    btnSubmitScore: document.getElementById('btn-submit-score'),
+    // Transition overlay
+    transitionOverlay: document.getElementById('transition-overlay'),
+    transitionBadge: document.getElementById('transition-badge'),
+    aiTauntText: document.getElementById('ai-taunt-text'),
+    // Answer key overlay
+    btnAnswerKey: document.getElementById('btn-answer-key'),
+    akOverlay: document.getElementById('answerkey-overlay'),
+    akPasswordScreen: document.getElementById('ak-password-screen'),
+    akContentScreen: document.getElementById('ak-content-screen'),
+    akPasswordInput: document.getElementById('ak-password-input'),
+    btnAkSubmit: document.getElementById('btn-ak-submit'),
+    akError: document.getElementById('ak-error'),
+    akLevelsList: document.getElementById('ak-levels-list'),
+    btnAkClose: document.getElementById('btn-ak-close'),
+    btnAkLock: document.getElementById('btn-ak-lock')
+};
+
+// --- UTILS ---
+const getRandomWord = () => CONFIG.words[Math.floor(Math.random() * CONFIG.words.length)];
+const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const formatTime = (secs) => `${String(Math.floor(secs / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}`;
+const escapeHtml = (str) => String(str).replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+const typeEffect = (element, text, speed = 30, callback = null) => {
+    element.innerHTML = '';
+    let i = 0;
+    const type = () => {
+        if (i < text.length) {
+            element.innerHTML += text.charAt(i) === '\n' ? '<br>' : text.charAt(i);
+            i++;
+            if (i % 3 === 0) Sound.type();
+            setTimeout(type, speed);
+        } else if (callback) {
+            callback();
+        }
+    };
+    type();
+};
+
+const switchScreen = (screenId) => {
+    DOM.screens.forEach(s => s.classList.add('hidden'));
+    DOM.screens.forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.remove('hidden');
+    document.getElementById(screenId).classList.add('active');
+    Sound.click();
+};
+
+// --- CONFETTI ---
+const CONFETTI_COLORS = ['#FFC94A', '#6C63FF', '#FF6FB5', '#23C68B', '#37D6C4', '#FF5C7A'];
+const launchConfetti = (count = 40) => {
+    for (let i = 0; i < count; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + 'vw';
+        piece.style.background = pickRandom(CONFETTI_COLORS);
+        piece.style.animationDuration = (2 + Math.random() * 1.5) + 's';
+        piece.style.transform = `rotate(${Math.random()*360}deg)`;
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 3800);
+    }
+};
+
+// --- GAME LOGIC ---
+
+const updateDashboard = () => {
+    DOM.dashTimer.innerText = formatTime(GAME_STATE.timeRemaining);
+    DOM.dashScore.innerText = String(GAME_STATE.score).padStart(4, '0');
+    DOM.dashLives.innerText = '♥'.repeat(GAME_STATE.lives) + '♡'.repeat(CONFIG.maxLives - GAME_STATE.lives);
+    if (GAME_STATE.timeRemaining <= 60) DOM.dashTimer.classList.add('pulse-warning');
+    else DOM.dashTimer.classList.remove('pulse-warning');
+
+    const progress = Math.min(100, Math.round(((GAME_STATE.level - 1) / CONFIG.totalLevels) * 100));
+    DOM.dashIntegrity.style.width = `${progress}%`;
+    DOM.dashIntVal.innerText = `${progress}%`;
+
+    // Update Keys
+    for (let i = 1; i <= 4; i++) {
+        let kSlot = document.getElementById(`key-${i}`);
+        if (GAME_STATE.inventory[i-1]) {
+            kSlot.innerText = `✓ KEY-0${i}: ${GAME_STATE.inventory[i-1]}`;
+            kSlot.classList.add('recovered');
+        } else {
+            kSlot.innerText = `○ KEY-0${i}`;
+            kSlot.classList.remove('recovered');
+        }
+    }
+};
+
+const startTimer = () => {
+    clearInterval(GAME_STATE.timerInterval);
+    GAME_STATE.timerInterval = setInterval(() => {
+        GAME_STATE.timeRemaining--;
+        updateDashboard();
+        if (GAME_STATE.timeRemaining <= 0) gameOver(false);
+    }, 1000);
+};
+
+const nextTaunt = () => {
+    if (usedTaunts.length >= AI_TAUNTS.length) usedTaunts = [];
+    let choice;
+    do { choice = Math.floor(Math.random() * AI_TAUNTS.length); } while (usedTaunts.includes(choice));
+    usedTaunts.push(choice);
+    return AI_TAUNTS[choice];
+};
+
+const triggerLevelSequence = () => {
+    // Celebration overlay with confetti + sledging AI comment before the next level loads
+    DOM.transitionBadge.innerText = `🎉 LEVEL ${GAME_STATE.level - 1} COMPLETE!`;
+    DOM.aiTauntText.innerText = nextTaunt();
+    DOM.transitionOverlay.classList.remove('hidden');
+    launchConfetti(50);
+    Sound.fanfare();
+
+    setTimeout(() => {
+        DOM.transitionOverlay.classList.add('hidden');
+        loadLevel(GAME_STATE.level);
+    }, 2200);
+};
+
+const submitAnswer = (inputVal) => {
+    Sound.click();
+    const cleanInput = inputVal.trim().toUpperCase();
+    if (cleanInput === GAME_STATE.currentAnswer) {
+        // Correct
+        GAME_STATE.score += CONFIG.pointsPerLevel;
+        showFeedback(true, "✅ CORRECT! KEY UNLOCKED.");
+        GAME_STATE.level++;
+        updateDashboard();
+        if (GAME_STATE.level > CONFIG.totalLevels) {
+            setTimeout(() => gameOver(true), 1200);
+        } else {
+            setTimeout(triggerLevelSequence, 1200);
+        }
+    } else {
+        // Wrong
+        GAME_STATE.lives--;
+        GAME_STATE.score = Math.max(0, GAME_STATE.score - CONFIG.penaltyWrong);
+        updateDashboard();
+        Sound.error();
+        if (GAME_STATE.lives <= 0) {
+            showFeedback(false, "❌ OUT OF LIVES. GAME OVER.");
+            setTimeout(() => gameOver(false), 2000);
+        } else {
+            showFeedback(false, `❌ NOT QUITE. ${GAME_STATE.lives} LIVES LEFT.`);
+        }
+    }
+};
+
+const showFeedback = (isSuccess, msg) => {
+    const fb = document.getElementById('level-feedback');
+    if (!fb) return;
+    fb.innerText = msg;
+    fb.className = isSuccess ? 'success mt-20' : 'critical mt-20';
+};
+
+const useHint = () => {
+    Sound.click();
+    if (GAME_STATE.hintIndex < GAME_STATE.currentHints.length) {
+        const ht = document.getElementById('level-hint-display');
+        ht.innerText += `\n💡 HINT ${GAME_STATE.hintIndex + 1}: ` + GAME_STATE.currentHints[GAME_STATE.hintIndex];
+        GAME_STATE.score = Math.max(0, GAME_STATE.score - CONFIG.penaltyHint);
+        GAME_STATE.hintIndex++;
+        updateDashboard();
+        if (GAME_STATE.hintIndex >= GAME_STATE.currentHints.length) {
+            document.getElementById('btn-hint').disabled = true;
+        }
+    }
+};
+
+// --- LEVEL GENERATORS (build a fresh, random set of 5 levels for this play-through) ---
+
+const generateAllLevels = () => {
+    const levels = [];
+
+    // LEVEL 1: EASY — Binary / Morse / ASCII
+    {
+        const word = getRandomWord();
+        const types = ['Binary', 'Morse', 'ASCII'];
+        const type = pickRandom(types);
+        let encoded = '';
+        if (type === 'Binary') encoded = Ciphers.textToBinary(word);
+        if (type === 'Morse') encoded = Ciphers.textToMorse(word);
+        if (type === 'ASCII') encoded = Ciphers.textToAscii(word);
+
+        levels.push({
+            id: 1,
+            title: 'PUZZLE 1',
+            subtitle: 'MYSTERY MESSAGE',
+            promptHTML: `<p>A mysterious message has appeared:</p><div class="data-block">${encoded}</div>`,
+            answer: word,
+            hints: [
+                `This message uses standard ${type} encoding.`,
+                `Look up a ${type} conversion chart.`
+            ],
+            keyReward: type.toUpperCase(),
+            akQuestion: `Decode this ${type} message`,
+            akData: encoded
+        });
+    }
+
+    // LEVEL 2: MEDIUM — Caesar Cipher
+    {
+        const word = getRandomWord();
+        const shift = Math.floor(Math.random() * 20) + 1; // 1 to 20
+        const encoded = Ciphers.caesar(word, shift, false);
+
+        levels.push({
+            id: 2,
+            title: 'PUZZLE 2',
+            subtitle: 'SECRET SHIFT',
+            promptHTML: `<p>Clue: "The letters have been shifted by ${shift} places."</p><div class="data-block">${encoded}</div>`,
+            answer: word,
+            hints: [
+                "The letters have been shifted down the alphabet.",
+                `The shift amount is exactly ${shift}. Reverse it.`
+            ],
+            keyReward: `SHIFT-${shift}`,
+            shiftValue: shift,
+            akQuestion: `Decode this Caesar Cipher (shift ${shift})`,
+            akData: encoded
+        });
+    }
+
+    // LEVEL 3: HARD — Vigenère
+    {
+        const word = pickRandom(VIG_WORD_BANK);
+        const key = pickRandom(VIG_KEY_BANK);
+        const encoded = Ciphers.vigenere(word, key, false);
+
+        levels.push({
+            id: 3,
+            title: 'PUZZLE 3',
+            subtitle: 'KEYWORD VAULT',
+            promptHTML: `<p>A repeating-key cipher protects this vault. Find the keyword to open it.</p><div class="data-block">${encoded}</div>`,
+            answer: word,
+            hints: [
+                "This is a polyalphabetic substitution cipher (Vigenère).",
+                "You need a secret keyword to unlock it.",
+                `Keyword is '${key}'. Use a Vigenère table to decrypt.`
+            ],
+            keyReward: key,
+            keywordValue: key,
+            akQuestion: `Decode this Vigenère Cipher (keyword "${key}")`,
+            akData: encoded
+        });
+    }
+
+    // LEVEL 4: EXPERT — Detective Logs
+    {
+        const pin = Math.floor(1000 + Math.random() * 9000);
+        const logs = `
+<div class="log-container">
+[19:40:01] SYSTEM CHECK NORMAL<br>
+[19:42:15] LOGIN FAILED (USER: GUEST)<br>
+<span class="log-entry sus">[19:44:22] LOGIN SUCCESS (USER: ADMIN) - LOCATION UNKNOWN</span><br>
+[19:44:25] SECURITY GATE OPENED<br>
+<span class="log-entry high">[19:46:10] VAULT FILE ACCESSED. GENERATED PIN: ${pin}</span><br>
+[19:48:05] UNKNOWN COMMAND EXECUTED: clear_logs.sh<br>
+[19:51:00] ALERT: VAULT LOCKED
+</div>`;
+
+        levels.push({
+            id: 4,
+            title: 'PUZZLE 4',
+            subtitle: 'DETECTIVE FILES',
+            promptHTML: `<p>Review the activity logs to find the hidden security PIN.</p>${logs}`,
+            answer: String(pin),
+            hints: [
+                "Read through the timeline carefully.",
+                "Something odd happens right after the ADMIN login.",
+                "Look at what happened immediately after the unauthorized admin login."
+            ],
+            keyReward: `PIN-${pin}`,
+            akQuestion: 'Find the hidden PIN in the activity logs',
+            akData: `PIN embedded in log line: "VAULT FILE ACCESSED. GENERATED PIN: ${pin}"`
+        });
+    }
+
+    // LEVEL 5: FINAL — Combines shift key from L2 and keyword from L3
+    {
+        const finalWord = pickRandom(FINAL_WORD_BANK);
+        const shiftKey = levels[1].shiftValue;
+        const vigKey = levels[2].keywordValue;
+
+        const step1 = Ciphers.vigenere(finalWord, vigKey, false);
+        const finalEncrypted = Ciphers.caesar(step1, shiftKey, false);
+
+        levels.push({
+            id: 5,
+            title: 'PUZZLE 5',
+            subtitle: 'FINAL TREASURE VAULT',
+            promptHTML: `<p class="critical">⭐ FINAL CHALLENGE ⭐</p>
+                 <p>To open the treasure vault, decrypt the master word.<br>
+                 It was encrypted with a Vigenère cipher (KEY-03), then a Caesar shift (KEY-02).</p>
+                 <div class="data-block">${finalEncrypted}</div>`,
+            answer: finalWord,
+            hints: [
+                "You'll need to combine both previous keys.",
+                `Step 1: Reverse the Caesar shift using KEY-02 (${shiftKey}).`,
+                `Step 2: Reverse the Vigenère cipher using KEY-03 (${vigKey}).`
+            ],
+            keyReward: null,
+            akQuestion: `Double-encrypted: Vigenère (keyword "${vigKey}") + Caesar shift ${shiftKey}`,
+            akData: finalEncrypted
+        });
+    }
+
+    GAME_STATE.levels = levels;
+};
+
+const buildLevelUI = (title, subtitle, contentHTML) => {
+    DOM.levelBox.innerHTML = `
+        <div class="level-header">
+            <h2>${title}</h2>
+            <h3>${subtitle}</h3>
+        </div>
+        ${contentHTML}
+        <div class="interaction-area mt-20">
+            <p id="level-hint-display" class="hint-text"></p>
+            <input type="text" id="level-input" class="game-input large-input" placeholder="ENTER YOUR ANSWER" autocomplete="off">
+            <div class="btn-group">
+                <button id="btn-submit" class="game-btn primary">SUBMIT</button>
+                <button id="btn-hint" class="game-btn warning">HINT (-${CONFIG.penaltyHint} PTS)</button>
+            </div>
+            <p id="level-feedback" class="mt-20 highlight"></p>
+        </div>
+    `;
+    document.getElementById('btn-submit').addEventListener('click', () => {
+        submitAnswer(document.getElementById('level-input').value);
+    });
+    document.getElementById('level-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') submitAnswer(e.target.value);
+    });
+    document.getElementById('btn-hint').addEventListener('click', useHint);
+    document.getElementById('level-input').focus();
+};
+
+const loadLevel = (levelIndex) => {
+    GAME_STATE.hintIndex = 0;
+    const cfg = GAME_STATE.levels[levelIndex - 1];
+    if (!cfg) return;
+
+    GAME_STATE.currentAnswer = cfg.answer;
+    GAME_STATE.currentHints = cfg.hints;
+    if (cfg.keyReward) GAME_STATE.inventory[levelIndex - 1] = cfg.keyReward;
+
+    buildLevelUI(cfg.title, cfg.subtitle, cfg.promptHTML);
+    updateDashboard();
+};
+
+const gameOver = (win) => {
+    clearInterval(GAME_STATE.timerInterval);
+    switchScreen('result-screen');
+    const title = document.getElementById('result-title');
+
+    // Reset submission widget state for a fresh run
+    DOM.inputTeamName.value = '';
+    DOM.btnSubmitScore.disabled = false;
+    DOM.btnSubmitScore.innerText = 'SUBMIT SCORE';
+
+    if (win) {
+        Sound.fanfare();
+        launchConfetti(80);
+        title.innerText = "🏆 QUEST COMPLETE!";
+        title.className = "game-title";
+        title.style.fontSize = "2.6rem";
+        // Calculate Time Bonus
+        const timeBonus = GAME_STATE.timeRemaining * CONFIG.timeBonusMultiplier;
+        GAME_STATE.score += timeBonus;
+        DOM.teamNameEntry.classList.remove('hidden');
+    } else {
+        Sound.error();
+        title.innerText = "😅 GAME OVER — TRY AGAIN!";
+        title.className = "game-title";
+        title.style.fontSize = "2.3rem";
+        DOM.teamNameEntry.classList.add('hidden');
+    }
+
+    document.getElementById('final-score').innerText = GAME_STATE.score;
+    document.getElementById('final-time').innerText = formatTime(GAME_STATE.timeRemaining);
+
+    // Auto reset visuals on leave
+    DOM.btnHome.addEventListener('click', () => {
+        initStartScreen();
+    }, {once: true});
+};
+
+// --- INITIALIZATION & FLOW ---
+
+const initStartScreen = () => {
+    switchScreen('start-screen');
+    // Reset state
+    GAME_STATE = {
+        level: 1,
+        score: 0,
+        lives: CONFIG.maxLives,
+        timeRemaining: CONFIG.startMinutes * 60,
+        timerInterval: null,
+        currentAnswer: '',
+        currentHints: [],
+        hintIndex: 0,
+        inventory: [],
+        levels: []
+    };
+    usedTaunts = [];
+    // Generate a brand-new random set of puzzles for the upcoming play-through,
+    // so the Answer Key is always ready and matches what will actually be played.
+    generateAllLevels();
+    updateDashboard();
+};
+
+const showBriefing = () => {
+    switchScreen('briefing-screen');
+    const briefingText = `Welcome, Puzzle Champion! 🎮\n\nThe WGS Treasure Vault has been sealed behind 5 fun code-breaking challenges.\n\nCrack ciphers, solve puzzles, and collect all the keys to unlock the final treasure.\n\nRace against the clock — the faster you solve, the higher you score!\n\nGood luck, and have fun!`;
+
+    DOM.btnAccept.classList.add('hidden');
+    typeEffect(document.getElementById('briefing-text'), briefingText, 20, () => {
+        DOM.btnAccept.classList.remove('hidden');
+    });
+};
+
+// --- CIPHER LAB LOGIC ---
+
+const updateLabKeyUI = () => {
+    const val = DOM.labCipher.value;
+    if (val === 'caesar') {
+        DOM.labKeyContainer.classList.remove('hidden');
+        DOM.labKeyLabel.innerText = 'SHIFT (0-25):';
+        DOM.labKey.placeholder = 'e.g. 5';
+    } else if (val === 'vigenere') {
+        DOM.labKeyContainer.classList.remove('hidden');
+        DOM.labKeyLabel.innerText = 'KEYWORD:';
+        DOM.labKey.placeholder = 'e.g. WGS';
+    } else {
+        DOM.labKeyContainer.classList.add('hidden');
+    }
+};
+
+const runLabCipher = (decrypt) => {
+    Sound.click();
+    const text = DOM.labInput.value;
+    if (!text.trim()) {
+        DOM.labOutput.value = 'ERROR: NO INPUT PROVIDED';
+        return;
+    }
+    const cipherType = DOM.labCipher.value;
+    let result = '';
+    try {
+        switch (cipherType) {
+            case 'binary':
+                result = decrypt ? Ciphers.binaryToText(text.trim()) : Ciphers.textToBinary(text);
+                break;
+            case 'morse':
+                result = decrypt ? Ciphers.morseToText(text.trim()) : Ciphers.textToMorse(text);
+                break;
+            case 'ascii':
+                result = decrypt ? Ciphers.asciiToText(text.trim()) : Ciphers.textToAscii(text);
+                break;
+            case 'caesar': {
+                const shift = parseInt(DOM.labKey.value, 10);
+                if (isNaN(shift)) {
+                    DOM.labOutput.value = 'ERROR: ENTER A VALID SHIFT NUMBER';
+                    return;
+                }
+                result = Ciphers.caesar(text, shift, decrypt);
+                break;
+            }
+            case 'vigenere': {
+                const key = DOM.labKey.value;
+                if (!key.trim()) {
+                    DOM.labOutput.value = 'ERROR: ENTER A KEYWORD';
+                    return;
+                }
+                result = Ciphers.vigenere(text, key, decrypt);
+                break;
+            }
+        }
+        if (!result || result.includes('NaN')) {
+            DOM.labOutput.value = 'ERROR: UNABLE TO PROCESS INPUT';
+            Sound.error();
+            return;
+        }
+        DOM.labOutput.value = result;
+        Sound.success();
+    } catch (e) {
+        DOM.labOutput.value = 'ERROR: UNABLE TO PROCESS INPUT';
+        Sound.error();
+    }
+};
+
+// --- CODEBREAKER MODE LOGIC ---
+
+const generateCodebreakerPuzzle = (difficulty) => {
+    const word = getRandomWord();
+    let cipherText, hint;
+
+    if (difficulty === 'easy') {
+        const shift = Math.floor(Math.random() * 5) + 1;
+        cipherText = Ciphers.caesar(word, shift, false);
+        hint = `CAESAR CIPHER DETECTED. Shift value: ${shift}. Shift each letter backward by ${shift}.`;
+    } else if (difficulty === 'medium') {
+        const keys = ['KEY', 'WGS', 'LOCK', 'CODE'];
+        const key = keys[Math.floor(Math.random() * keys.length)];
+        cipherText = Ciphers.vigenere(word, key, false);
+        hint = `VIGENÈRE CIPHER DETECTED. Keyword length: ${key.length}. Common WGS-related short words work well.`;
+    } else {
+        const keys = ['CIPHER', 'SECURE', 'WISDOM'];
+        const key = keys[Math.floor(Math.random() * keys.length)];
+        const shift = Math.floor(Math.random() * 10) + 1;
+        const step1 = Ciphers.vigenere(word, key, false);
+        cipherText = Ciphers.caesar(step1, shift, false);
+        hint = `DOUBLE ENCRYPTION: Vigenère + Caesar shift ${shift}. Reverse the Caesar shift first, then the Vigenère.`;
+    }
+
+    return { cipherText, hint, answer: word };
+};
+
+const startCodebreakerRound = (difficulty) => {
+    Sound.click();
+    const puzzle = generateCodebreakerPuzzle(difficulty);
+    CB_STATE.answer = puzzle.answer;
+    CB_STATE.difficulty = difficulty;
+    DOM.cbPuzzleArea.classList.remove('hidden');
+    DOM.cbCipherText.innerText = puzzle.cipherText;
+    DOM.cbHint.innerText = puzzle.hint;
+    DOM.cbInput.value = '';
+    DOM.cbFeedback.innerText = '';
+    DOM.cbFeedback.className = '';
+    DOM.cbInput.focus();
+};
+
+const verifyCodebreaker = () => {
+    Sound.click();
+    const input = DOM.cbInput.value.trim().toUpperCase();
+    if (!input) return;
+    if (input === CB_STATE.answer) {
+        DOM.cbFeedback.innerText = '✅ CORRECT! DECRYPTION SUCCESSFUL.';
+        DOM.cbFeedback.className = 'success';
+        Sound.success();
+        setTimeout(() => startCodebreakerRound(CB_STATE.difficulty), 1500);
+    } else {
+        DOM.cbFeedback.innerText = '❌ NOT QUITE. TRY AGAIN.';
+        DOM.cbFeedback.className = 'critical';
+        Sound.error();
+    }
+};
+
+// --- LEADERBOARD LOGIC (Shared persistent storage) ---
+
+const renderLeaderboard = async () => {
+    DOM.leaderboardBody.innerHTML = '<tr><td colspan="4">LOADING...</td></tr>';
+    try {
+        const listResult = await window.storage.list(LB_PREFIX, true);
+        const keys = listResult ? listResult.keys : [];
+        const entries = [];
+        for (const key of keys) {
+            try {
+                const res = await window.storage.get(key, true);
+                if (res && res.value) entries.push(JSON.parse(res.value));
+            } catch (e) {
+                // skip unreadable entry
+            }
+        }
+        entries.sort((a, b) => b.score - a.score);
+        const top = entries.slice(0, 10);
+        if (top.length === 0) {
+            DOM.leaderboardBody.innerHTML = '<tr><td colspan="4">NO RECORDS FOUND</td></tr>';
+            return;
+        }
+        DOM.leaderboardBody.innerHTML = top.map((e, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td>${escapeHtml(e.team)}</td>
+                <td>${e.score}</td>
+                <td>${formatTime(e.timeLeft || 0)}</td>
+            </tr>
+        `).join('');
+    } catch (e) {
+        DOM.leaderboardBody.innerHTML = '<tr><td colspan="4">ERROR LOADING DATABASE</td></tr>';
+    }
+};
+
+const submitScore = async () => {
+    const teamName = (DOM.inputTeamName.value.trim() || 'ANONYMOUS').toUpperCase().slice(0, 15);
+    DOM.btnSubmitScore.disabled = true;
+    DOM.btnSubmitScore.innerText = 'SAVING...';
+    try {
+        const id = `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+        await window.storage.set(LB_PREFIX + id, JSON.stringify({
+            team: teamName,
+            score: GAME_STATE.score,
+            timeLeft: GAME_STATE.timeRemaining
+        }), true);
+        DOM.btnSubmitScore.innerText = 'SAVED ✓';
+        Sound.success();
+    } catch (e) {
+        DOM.btnSubmitScore.innerText = 'SAVE FAILED - RETRY';
+        DOM.btnSubmitScore.disabled = false;
+        Sound.error();
+    }
+};
+
+const clearLeaderboard = async () => {
+    if (!wipeConfirmPending) {
+        wipeConfirmPending = true;
+        DOM.btnClearLB.innerText = '[ CLICK AGAIN TO CONFIRM WIPE ]';
+        Sound.warning();
+        setTimeout(() => {
+            wipeConfirmPending = false;
+            DOM.btnClearLB.innerText = '[ WIPE DATABASE ]';
+        }, 4000);
+        return;
+    }
+    wipeConfirmPending = false;
+    DOM.btnClearLB.innerText = 'WIPING...';
+    DOM.btnClearLB.disabled = true;
+    try {
+        const listResult = await window.storage.list(LB_PREFIX, true);
+        const keys = listResult ? listResult.keys : [];
+        for (const key of keys) {
+            await window.storage.delete(key, true);
+        }
+        Sound.error();
+        await renderLeaderboard();
+    } catch (e) {
+        // ignore
+    } finally {
+        DOM.btnClearLB.innerText = '[ WIPE DATABASE ]';
+        DOM.btnClearLB.disabled = false;
+    }
+};
+
+// --- ANSWER KEY LOGIC (password protected: WGS PRIME) ---
+
+const renderAnswerKeyContent = () => {
+    if (!GAME_STATE.levels || GAME_STATE.levels.length === 0) generateAllLevels();
+    DOM.akLevelsList.innerHTML = GAME_STATE.levels.map(lv => `
+        <div class="ak-card">
+            <h4>${lv.title}: ${lv.subtitle}</h4>
+            <p>${lv.akQuestion}</p>
+            <div class="ak-data">${lv.akData}</div>
+            <p class="ak-answer">✅ Answer: ${lv.answer}</p>
+        </div>
+    `).join('');
+};
+
+const openAnswerKey = () => {
+    Sound.click();
+    DOM.akOverlay.classList.remove('hidden');
+    DOM.akPasswordScreen.classList.remove('hidden');
+    DOM.akContentScreen.classList.add('hidden');
+    DOM.akPasswordInput.value = '';
+    DOM.akError.innerText = '';
+    DOM.akPasswordInput.focus();
+};
+
+const closeAnswerKey = () => {
+    Sound.click();
+    DOM.akOverlay.classList.add('hidden');
+};
+
+const checkAnswerKeyPassword = () => {
+    Sound.click();
+    const entered = DOM.akPasswordInput.value.trim().toUpperCase();
+    if (entered === ANSWER_KEY_PASSWORD) {
+        renderAnswerKeyContent();
+        DOM.akPasswordScreen.classList.add('hidden');
+        DOM.akContentScreen.classList.remove('hidden');
+        DOM.akError.innerText = '';
+        Sound.success();
+    } else {
+        DOM.akError.innerText = '🚫 Incorrect password. Access denied.';
+        DOM.akPasswordScreen.classList.add('ak-shake');
+        Sound.error();
+        setTimeout(() => DOM.akPasswordScreen.classList.remove('ak-shake'), 400);
+    }
+};
+
+const relockAnswerKey = () => {
+    Sound.click();
+    DOM.akContentScreen.classList.add('hidden');
+    DOM.akPasswordScreen.classList.remove('hidden');
+    DOM.akPasswordInput.value = '';
+    DOM.akPasswordInput.focus();
+};
+
+// --- EVENT LISTENERS ---
+
+// Audio Context unlock for browsers
+document.body.addEventListener('click', () => {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+}, {once: true});
+
+DOM.btnMute.addEventListener('click', () => {
+    soundEnabled = !soundEnabled;
+    DOM.btnMute.innerText = soundEnabled ? '🔊 SOUND ON' : '🔈 SOUND OFF';
+    Sound.click();
+});
+
+DOM.btnStart.addEventListener('click', () => {
+    Sound.click();
+    showBriefing();
+});
+
+DOM.btnAccept.addEventListener('click', () => {
+    Sound.click();
+    switchScreen('game-screen');
+    startTimer();
+    loadLevel(GAME_STATE.level);
+});
+
+// Top-level navigation
+DOM.btnLab.addEventListener('click', () => {
+    switchScreen('lab-screen');
+    updateLabKeyUI();
+});
+DOM.btnCB.addEventListener('click', () => switchScreen('codebreaker-screen'));
+DOM.btnLB.addEventListener('click', () => {
+    switchScreen('leaderboard-screen');
+    renderLeaderboard();
+});
+DOM.btnTeam.addEventListener('click', () => switchScreen('team-screen'));
+DOM.btnCloses.forEach(btn => btn.addEventListener('click', () => switchScreen('start-screen')));
+
+// Cipher Lab
+DOM.labCipher.addEventListener('change', updateLabKeyUI);
+DOM.btnLabEnc.addEventListener('click', () => runLabCipher(false));
+DOM.btnLabDec.addEventListener('click', () => runLabCipher(true));
+
+// Codebreaker
+DOM.diffButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        DOM.diffButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        startCodebreakerRound(btn.dataset.diff);
+    });
+});
+DOM.cbSubmit.addEventListener('click', verifyCodebreaker);
+DOM.cbInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') verifyCodebreaker();
+});
+
+// Leaderboard
+DOM.btnSubmitScore.addEventListener('click', submitScore);
+DOM.inputTeamName.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') submitScore();
+});
+DOM.btnClearLB.addEventListener('click', clearLeaderboard);
+
+// Answer Key (accessible from any screen, at any time, password protected)
+DOM.btnAnswerKey.addEventListener('click', openAnswerKey);
+DOM.btnAkClose.addEventListener('click', closeAnswerKey);
+DOM.btnAkSubmit.addEventListener('click', checkAnswerKeyPassword);
+DOM.akPasswordInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') checkAnswerKeyPassword();
+});
+DOM.btnAkLock.addEventListener('click', relockAnswerKey);
+
+// --- BOOT ---
+updateLabKeyUI();
+generateAllLevels(); // Puzzles ready & answer key available immediately on page load
+updateDashboard();
+
+    </script>
+</body>
+</html>
